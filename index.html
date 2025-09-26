@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>4択クイズ</title>
+<style>
+  body{
+    font-family:'Helvetica Neue',sans-serif;
+    background:#f5f6fa;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px;
+  }
+  h1{color:#2f3640;}
+
+  /* カード風コンテナ */
+  #quizContainer, #resultContainer{
+    background:white;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    padding:20px 30px;
+    width:100%;
+    max-width:600px;
+    margin-top:20px;
+  }
+
+  .question{
+    font-size:1.2em;
+    margin-bottom:20px;
+  }
+
+  button{
+    width:100%;
+    padding:12px 15px;
+    margin:8px 0;
+    font-size:1em;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition: all 0.2s ease;
+    background:#dcdde1;
+  }
+  button:hover{
+    background:#a4b0be;
+    color:white;
+  }
+  button.correct{
+    background:#44bd32 !important;
+    color:white;
+  }
+  button.wrong{
+    background:#e84118 !important;
+    color:white;
+  }
+
+  #nextBtn{
+    background:#00a8ff;
+    color:white;
+    width:auto;
+    padding:10px 20px;
+  }
+  #nextBtn:hover{
+    background:#0097e6;
+  }
+
+  select, label{
+    margin:5px 10px;
+  }
+
+/* カテゴリ・順番選択部分 */
+#controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:15px;
+  background:#f1f2f6;
+  padding:15px 20px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  justify-content:flex-start;
+  align-items:center;
+}
+
+#categoryContainer{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+#categoryCheckboxes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:5px;
+}
+
+#categoryCheckboxes label{
+  display:flex;
+  align-items:center;
+  background:white;
+  padding:6px 10px;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+  cursor:pointer;
+  transition:all 0.2s;
+  font-size:0.95em;
+}
+
+#categoryCheckboxes input[type=checkbox]{
+  margin-right:5px;
+  cursor:pointer;
+}
+
+#categoryCheckboxes label:hover{
+  background:#00a8ff;
+  color:white;
+}
+
+.orderContainer select{
+  padding:6px 12px;
+  border-radius:8px;
+  border:1px solid #dcdde1;
+  background:white;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+.orderContainer select:hover{
+  border-color:#00a8ff;
+}
+
+@media(max-width:600px){
+  #controls{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+
+/* 開始ボタン */
+#startBtn{
+  padding:10px 25px;
+  border-radius:8px;
+  border:none;
+  background:#00a8ff;
+  color:white;
+  font-weight:bold;
+  font-size:1em;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+#startBtn:hover{
+  background:#0097e6;
+  transform:translateY(-2px);
+}
+
+/* 結果画面 */
+#resultContainer{
+  background:#f5f6fa;
+  padding:20px 25px;
+  border-radius:12px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.1);
+  max-width:700px;
+  width:100%;
+}
+
+#scoreEl{
+  background:#00a8ff;
+  color:white;
+  padding:15px 20px;
+  border-radius:12px;
+  font-size:1.2em;
+  font-weight:bold;
+  text-align:center;
+  margin-bottom:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+#allAnswersEl{
+  list-style:none;
+  padding:0;
+  max-height:400px;
+  overflow-y:auto;
+}
+
+#allAnswersEl li{
+  background:white;
+  padding:12px 15px;
+  margin-bottom:10px;
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  line-height:1.4;
+  transition:all 0.2s;
+}
+
+#allAnswersEl li span{
+  font-weight:bold;
+}
+
+  /* 進行状況 */
+  #progress{
+    text-align:right;
+    font-size:0.9em;
+    color:#718093;
+    margin-bottom:10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>4択クイズ</h1>
+
+<div id="controls">
+  <div id="categoryContainer">
+    <strong>カテゴリ:</strong>
+    <div id="categoryCheckboxes"></div>
+  </div>
+
+  <div class="orderContainer">
+    <label>順番：
+      <select id="orderSelect">
+        <option value="order">順番</option>
+        <option value="random">ランダム</option>
+      </select>
+    </label>
+  </div>
+
+  <button id="startBtn">開始</button>
+</div>
+
+<div id="quizContainer" style="display:none;">
+  <div id="progress"></div>
+  <div id="questionEl" class="question"></div>
+  <div id="choicesEl"></div>
+  <button id="nextBtn" style="display:none;">次の問題</button>
+</div>
+
+<div id="resultContainer" style="display:none;">
+  <h2>結果</h2>
+  <div id="scoreEl" style="font-weight:bold;margin-bottom:15px;"></div>
+  <ul id="allAnswersEl"></ul>
+</div>
+
+<script>
+let allQuestions=[], workingSet=[], currentIndex=0, userAnswers=[];
+const categorySelect = document.getElementById('categorySelect');
+const orderSelect = document.getElementById('orderSelect');
+const startBtn = document.getElementById('startBtn');
+const quizContainer = document.getElementById('quizContainer');
+const questionEl = document.getElementById('questionEl');
+const choicesEl = document.getElementById('choicesEl');
+const nextBtn = document.getElementById('nextBtn');
+const resultContainer = document.getElementById('resultContainer');
+const scoreEl = document.getElementById('scoreEl');
+const allAnswersEl = document.getElementById('allAnswersEl');
+const progressEl = document.getElementById('progress');
+
+// JSON読み込み
+fetch('questions.json')
+  .then(res=>res.json())
+  .then(json=>{
+    allQuestions = json.map(q=>({
+      id: q.id||crypto.randomUUID(),
+      text: q.text||'',
+      choices: Array.isArray(q.choices)? q.choices : [],
+      correctIndex: typeof q.correctIndex==='number'? q.correctIndex:0,
+      category: String(q.category||'未分類').trim()
+    }));
+    populateCategoryOptions();
+  })
+  .catch(err=>alert('JSON読み込みエラー: '+err));
+
+function populateCategoryOptions(){
+  const container = document.getElementById('categoryCheckboxes');
+  container.innerHTML = '';
+  // 「すべて」チェックボックス
+  const allCb = document.createElement('label');
+  allCb.style.marginRight='10px';
+  allCb.innerHTML = `<input type="checkbox" value="__all" checked> すべて`;
+  container.appendChild(allCb);
+
+  // 個別カテゴリ
+  const cats = Array.from(new Set(allQuestions.map(q=>q.category)));
+  cats.forEach(c=>{
+    const lbl = document.createElement('label');
+    lbl.style.marginRight='10px';
+    lbl.innerHTML = `<input type="checkbox" value="${c}"> ${c}`;
+    container.appendChild(lbl);
+  });
+}
+
+function getSelectedCategories(){
+  const checked = Array.from(document.querySelectorAll('#categoryCheckboxes input[type=checkbox]:checked'));
+  const values = checked.map(cb => cb.value.trim());
+  if(values.includes('__all') || values.length===0) return ['__all'];
+  return values;
+}
+
+function prepareWorkingSet(){
+  const selectedCats = getSelectedCategories();
+  if(selectedCats.includes('__all')){
+    workingSet = allQuestions.slice();
+  } else {
+    workingSet = allQuestions.filter(q=>selectedCats.includes(q.category.trim()));
+  }
+
+  if(workingSet.length===0){
+    alert('選択したカテゴリに問題がありません');
+    return false;
+  }
+
+  if(orderSelect.value==='random') shuffleArray(workingSet);
+  currentIndex=0; userAnswers=[];
+  return true;
+}
+
+
+function shuffleArray(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr;}
+
+function showQuestion(){
+  const q = workingSet[currentIndex];
+  progressEl.textContent = `問題 ${currentIndex+1} / ${workingSet.length}`;
+  questionEl.textContent = q.text;
+  choicesEl.innerHTML='';
+
+  q.choices.forEach((ch,i)=>{
+    const btn = document.createElement('button');
+    btn.textContent = ch;
+    btn.onclick = ()=>{
+      if(userAnswers[currentIndex]!=null) return;
+      userAnswers[currentIndex]=i;
+      if(i===q.correctIndex) btn.classList.add('correct');
+      else btn.classList.add('wrong');
+
+      // 0.5秒後に次の問題へ
+      setTimeout(()=>{
+        currentIndex++;
+        if(currentIndex>=workingSet.length) showResult();
+        else showQuestion();
+      }, 500);
+    };
+    choicesEl.appendChild(btn);
+  });
+}
+
+
+function showResult(){
+  quizContainer.style.display='none';
+  resultContainer.style.display='block';
+  let correctCount=0;
+  allAnswersEl.innerHTML='';
+  workingSet.forEach((q,i)=>{
+    const li=document.createElement('li');
+    const ua=userAnswers[i];
+    const isCorrect=ua===q.correctIndex;
+    if(isCorrect) correctCount++;
+    li.innerHTML = `${q.text}<br>あなたの答え: ${ua!=null?q.choices[ua]:'未回答'} ｜ 正解: ${q.choices[q.correctIndex]} <span style="color:${isCorrect?'green':'red'}">${isCorrect?'正解':'不正解'}</span>`;
+    allAnswersEl.appendChild(li);
+  });
+  scoreEl.textContent = `正答数: ${correctCount} / ${workingSet.length}`;
+}
+
+startBtn.onclick=()=>{
+  if(!prepareWorkingSet()) return;
+  quizContainer.style.display='block';
+  resultContainer.style.display='none';
+  showQuestion();
+  nextBtn.style.display='none';
+};
+
+nextBtn.onclick=()=>{
+  currentIndex++;
+  if(currentIndex>=workingSet.length) showResult();
+  else{ showQuestion(); nextBtn.style.display='none'; }
+};
+</script>
+
+</body>
+</html>
