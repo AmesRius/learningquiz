@@ -1,378 +1,391 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>4択クイズ</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>興学思想4択クイズ</title>
 <style>
-  body{
-    font-family:'Helvetica Neue',sans-serif;
-    background:#f5f6fa;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding:20px;
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --accent:#00a8ff; --muted:#6b7280;
+    --success:#22c55e; --danger:#ef4444;
   }
-  h1{color:#2f3640;}
-
-  /* カード風コンテナ */
-  #quizContainer, #resultContainer{
-    background:white;
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    padding:20px 30px;
-    width:100%;
-    max-width:600px;
-    margin-top:20px;
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;background:var(--bg);color:#111}
+  .wrap{max-width:920px;margin:28px auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:20px}
+  .controls-card{background:var(--card);border-radius:12px;padding:14px 16px;box-shadow:0 8px 24px rgba(15,23,42,0.06);display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  /* カテゴリ領域 */
+  .category-area{min-width:280px;flex:1}
+  .category-title{font-weight:700;margin-bottom:8px}
+  #categoryCheckboxes{display:flex;flex-wrap:wrap;gap:10px}
+  .cat-label{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#fbfdff;border:1px solid #eef2ff;cursor:pointer;box-shadow:0 2px 8px rgba(16,24,40,0.03);transition:all .14s;
   }
-
-  .question{
-    font-size:1.2em;
-    margin-bottom:20px;
+  .cat-label input{width:16px;height:16px}
+  .cat-label:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+  /* コントロール右側 */
+  .right-controls{display:flex;gap:12px;align-items:center}
+  .order-box{display:flex;flex-direction:column;gap:6px}
+  select{padding:8px 12px;border-radius:10px;border:1px solid #e6e9ef;background:white;min-width:140px}
+  #startBtn{background:var(--accent);color:white;padding:10px 16px;border-radius:10px;border:none;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(0,160,255,0.12);transition:transform .12s}
+  #startBtn:hover{transform:translateY(-3px)}
+  /* 問題領域 */
+  .card{background:var(--card);border-radius:12px;padding:18px;margin-top:18px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
+  #progress{color:var(--muted);text-align:right;font-size:13px}
+  .qtext{font-size:18px;margin:12px 0 16px}
+  #choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .choice{
+    background:#fbfdff;padding:12px;border-radius:12px;border:1px solid #e7eefc;cursor:pointer;min-height:52px;display:flex;align-items:center;gap:8px;transition:all .12s;font-weight:600
   }
-
-  button{
-    width:100%;
-    padding:12px 15px;
-    margin:8px 0;
-    font-size:1em;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    transition: all 0.2s ease;
-    background:#dcdde1;
-  }
-  button:hover{
-    background:#a4b0be;
-    color:white;
-  }
-  button.correct{
-    background:#44bd32 !important;
-    color:white;
-  }
-  button.wrong{
-    background:#e84118 !important;
-    color:white;
-  }
-
-  #nextBtn{
-    background:#00a8ff;
-    color:white;
-    width:auto;
-    padding:10px 20px;
-  }
-  #nextBtn:hover{
-    background:#0097e6;
-  }
-
-  select, label{
-    margin:5px 10px;
-  }
-
-/* カテゴリ・順番選択部分 */
-#controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:15px;
-  background:#f1f2f6;
-  padding:15px 20px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.08);
-  justify-content:flex-start;
-  align-items:center;
-}
-
-#categoryContainer{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-#categoryCheckboxes{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:5px;
-}
-
-#categoryCheckboxes label{
-  display:flex;
-  align-items:center;
-  background:white;
-  padding:6px 10px;
-  border-radius:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.08);
-  cursor:pointer;
-  transition:all 0.2s;
-  font-size:0.95em;
-}
-
-#categoryCheckboxes input[type=checkbox]{
-  margin-right:5px;
-  cursor:pointer;
-}
-
-#categoryCheckboxes label:hover{
-  background:#00a8ff;
-  color:white;
-}
-
-.orderContainer select{
-  padding:6px 12px;
-  border-radius:8px;
-  border:1px solid #dcdde1;
-  background:white;
-  cursor:pointer;
-  transition:all 0.2s;
-}
-
-.orderContainer select:hover{
-  border-color:#00a8ff;
-}
-
-@media(max-width:600px){
-  #controls{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-}
-
-/* 開始ボタン */
-#startBtn{
-  padding:10px 25px;
-  border-radius:8px;
-  border:none;
-  background:#00a8ff;
-  color:white;
-  font-weight:bold;
-  font-size:1em;
-  cursor:pointer;
-  transition:all 0.2s;
-}
-#startBtn:hover{
-  background:#0097e6;
-  transform:translateY(-2px);
-}
-
-/* 結果画面 */
-#resultContainer{
-  background:#f5f6fa;
-  padding:20px 25px;
-  border-radius:12px;
-  box-shadow:0 6px 16px rgba(0,0,0,0.1);
-  max-width:700px;
-  width:100%;
-}
-
-#scoreEl{
-  background:#00a8ff;
-  color:white;
-  padding:15px 20px;
-  border-radius:12px;
-  font-size:1.2em;
-  font-weight:bold;
-  text-align:center;
-  margin-bottom:20px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-#allAnswersEl{
-  list-style:none;
-  padding:0;
-  max-height:400px;
-  overflow-y:auto;
-}
-
-#allAnswersEl li{
-  background:white;
-  padding:12px 15px;
-  margin-bottom:10px;
-  border-radius:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.08);
-  line-height:1.4;
-  transition:all 0.2s;
-}
-
-#allAnswersEl li span{
-  font-weight:bold;
-}
-
-  /* 進行状況 */
-  #progress{
-    text-align:right;
-    font-size:0.9em;
-    color:#718093;
-    margin-bottom:10px;
+  .choice:hover{transform:translateY(-3px)}
+  .choice.disabled{opacity:0.6;cursor:default;transform:none}
+  .choice.correct{border-color:var(--success);background:#ecfdf5;color:var(--success)}
+  .choice.wrong{border-color:var(--danger);background:#fff1f2;color:var(--danger)}
+  .letter{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:#eef6ff;color:var(--accent);font-weight:800;margin-right:8px}
+  /* 結果 */
+  #results{margin-top:18px}
+  .score-card{background:linear-gradient(90deg,#00a8ff 0%,#0077d6 100%);color:white;padding:18px;border-radius:12px;font-weight:800;font-size:18px;text-align:center;box-shadow:0 8px 24px rgba(0,120,220,0.14)}
+  .summary-list{margin-top:14px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding-right:6px}
+  .summary-item{background:white;border-radius:10px;padding:12px;border:1px solid #eef2ff;box-shadow:0 4px 12px rgba(16,24,40,0.04)}
+  .summary-item .meta{color:var(--muted);font-size:13px;margin-top:6px}
+  /* 問題数指定 */
+  .num-box{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  input[type=number]{width:110px;padding:8px;border-radius:8px;border:1px solid #e6e9ef;background:white}
+  .hint{font-size:13px;color:var(--muted)}
+  @media(max-width:720px){
+    #choices{grid-template-columns:1fr}
+    .right-controls{width:100%;justify-content:space-between}
   }
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <h1>4択クイズ</h1>
+      <!--<div class="hint">同フォルダに <code>questions.json</code> を置くか、Loadボタンで読み込んでください</div>-->
+    </header>
 
-<h1>4択クイズ</h1>
+    <div class="controls-card">
+      <div class="category-area">
+        <div class="category-title">カテゴリ（複数選択可）</div>
+        <div id="categoryCheckboxes" aria-label="カテゴリ一覧">
+          <!-- JSで生成 -->
+        </div>
+      </div>
 
-<div id="controls">
-  <div id="categoryContainer">
-    <strong>カテゴリ:</strong>
-    <div id="categoryCheckboxes"></div>
+      <div class="right-controls">
+        <div class="order-box">
+          <div style="font-weight:700">順番</div>
+          <select id="orderSelect" title="問題順">
+            <option value="order">順番</option>
+            <option value="random">ランダム</option>
+          </select>
+        </div>
+
+        <div class="num-box" id="numBox" style="display:none">
+          <div style="font-weight:700">問題数（すべて選択時のみ）</div>
+          <input id="numInput" type="number" min="1" step="1" value="10" />
+          <div class="hint" id="numHint">全 <span id="totalAvailable">0</span> 問 の中から</div>
+        </div>
+
+        <button id="startBtn">開始</button>
+      </div>
+    </div>
+
+    <div class="card" id="quizArea" style="display:none">
+      <div id="progress">問題 0 / 0</div>
+      <div class="qtext" id="qtext">問題文</div>
+      <div id="choices"></div>
+    </div>
+
+    <div id="results" style="display:none">
+      <div class="score-card" id="scoreCard">正答: <span id="score">0</span> / <span id="scoreTotal">0</span></div>
+      <div class="summary-list" id="summaryList"></div>
+    </div>
+
+    <!--<div style="margin-top:14px;color:var(--muted);font-size:13px">
+      ヒント: ローカルで fetch がブロックされる場合は <code>python -m http.server</code> 等で起動してください。
+    </div>-->
   </div>
-
-  <div class="orderContainer">
-    <label>順番：
-      <select id="orderSelect">
-        <option value="order">順番</option>
-        <option value="random">ランダム</option>
-      </select>
-    </label>
-  </div>
-
-  <button id="startBtn">開始</button>
-</div>
-
-<div id="quizContainer" style="display:none;">
-  <div id="progress"></div>
-  <div id="questionEl" class="question"></div>
-  <div id="choicesEl"></div>
-  <button id="nextBtn" style="display:none;">次の問題</button>
-</div>
-
-<div id="resultContainer" style="display:none;">
-  <h2>結果</h2>
-  <div id="scoreEl" style="font-weight:bold;margin-bottom:15px;"></div>
-  <ul id="allAnswersEl"></ul>
-</div>
 
 <script>
-let allQuestions=[], workingSet=[], currentIndex=0, userAnswers=[];
-const categorySelect = document.getElementById('categorySelect');
+/* 状態 */
+let allQuestions = [];
+let workingSet = [];
+let currentIndex = 0;
+let userAnswers = [];
+let autoAdvanceTimer = null;
+
+/* 要素 */
+const categoryBoxes = document.getElementById('categoryCheckboxes');
 const orderSelect = document.getElementById('orderSelect');
 const startBtn = document.getElementById('startBtn');
-const quizContainer = document.getElementById('quizContainer');
-const questionEl = document.getElementById('questionEl');
-const choicesEl = document.getElementById('choicesEl');
-const nextBtn = document.getElementById('nextBtn');
-const resultContainer = document.getElementById('resultContainer');
-const scoreEl = document.getElementById('scoreEl');
-const allAnswersEl = document.getElementById('allAnswersEl');
+const numBox = document.getElementById('numBox');
+const numInput = document.getElementById('numInput');
+const totalAvailableEl = document.getElementById('totalAvailable');
+
+const quizArea = document.getElementById('quizArea');
 const progressEl = document.getElementById('progress');
+const qtext = document.getElementById('qtext');
+const choicesDiv = document.getElementById('choices');
 
-// JSON読み込み
-fetch('questions.json')
-  .then(res=>res.json())
-  .then(json=>{
-    allQuestions = json.map(q=>({
-      id: q.id||crypto.randomUUID(),
-      text: q.text||'',
-      choices: Array.isArray(q.choices)? q.choices : [],
-      correctIndex: typeof q.correctIndex==='number'? q.correctIndex:0,
-      category: String(q.category||'未分類').trim()
-    }));
-    populateCategoryOptions();
-  })
-  .catch(err=>alert('JSON読み込みエラー: '+err));
+const resultsEl = document.getElementById('results');
+const scoreEl = document.getElementById('score');
+const scoreTotalEl = document.getElementById('scoreTotal');
+const summaryList = document.getElementById('summaryList');
 
-function populateCategoryOptions(){
-  const container = document.getElementById('categoryCheckboxes');
-  container.innerHTML = '';
-  // 「すべて」チェックボックス
-  const allCb = document.createElement('label');
-  allCb.style.marginRight='10px';
-  allCb.innerHTML = `<input type="checkbox" value="__all" checked> すべて`;
-  container.appendChild(allCb);
-
-  // 個別カテゴリ
-  const cats = Array.from(new Set(allQuestions.map(q=>q.category)));
-  cats.forEach(c=>{
-    const lbl = document.createElement('label');
-    lbl.style.marginRight='10px';
-    lbl.innerHTML = `<input type="checkbox" value="${c}"> ${c}`;
-    container.appendChild(lbl);
+/* ファイル自動読み込み（同フォルダのquestions.json）*/
+window.addEventListener('load', () => {
+  fetch('questions.json').then(r=>{
+    if(!r.ok) throw new Error('no local json');
+    return r.json();
+  }).then(json=>{
+    loadQuestions(json);
+  }).catch(err=>{
+    console.log('自動読み込みできませんでした。画面上からJSONを読み込んでください。', err);
   });
+});
+
+/* JSON を読み込んで内部形式に整形 */
+function loadQuestions(json){
+  if(!Array.isArray(json)){ alert('JSONは配列である必要があります'); return; }
+  allQuestions = json.map(q=>({
+    id: q.id || cryptoRandomId(),
+    text: q.text || q.question || '',
+    choices: Array.isArray(q.choices) && q.choices.length>0
+              ? q.choices
+              : [q.choice1,q.choice2,q.choice3,q.choice4].filter(x=>x!==undefined),
+    correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : 0,
+    category: String(q.category || '未分類').trim()
+  }));
+  populateCategoryCheckboxes();
+  totalAvailableEl.textContent = allQuestions.length;
+  numInput.value = Math.min( Math.max(1, Math.floor(allQuestions.length/2) ), allQuestions.length );
 }
 
-function getSelectedCategories(){
-  const checked = Array.from(document.querySelectorAll('#categoryCheckboxes input[type=checkbox]:checked'));
-  const values = checked.map(cb => cb.value.trim());
-  if(values.includes('__all') || values.length===0) return ['__all'];
-  return values;
+/* カテゴリチェックボックスを生成 */
+function populateCategoryCheckboxes(){
+  categoryBoxes.innerHTML = '';
+  // すべてボックス（最初はチェック済み）
+  const allLabel = createCatLabel('__all','すべて', true);
+  categoryBoxes.appendChild(allLabel);
+
+  const cats = Array.from(new Set(allQuestions.map(q=>q.category)));
+  cats.forEach(c => {
+    const lbl = createCatLabel(c, c, false);
+    categoryBoxes.appendChild(lbl);
+  });
+
+  // クリックやチェックの挙動を管理（すべてと排他）
+  categoryBoxes.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', onCategoryChange);
+  });
+  updateNumBoxVisibility();
 }
 
-function prepareWorkingSet(){
-  const selectedCats = getSelectedCategories();
-  if(selectedCats.includes('__all')){
-    workingSet = allQuestions.slice();
+/* ラベル作成ユーティリティ */
+function createCatLabel(value, text, checked){
+  const label = document.createElement('label');
+  label.className = 'cat-label';
+  label.innerHTML = `<input type="checkbox" value="${escapeHtml(value)}"${checked? ' checked' : ''}> <span>${escapeHtml(text)}</span>`;
+  return label;
+}
+
+/* カテゴリチェック変化ハンドラ */
+function onCategoryChange(e){
+  const changed = e.target;
+  if(changed.value === '__all'){
+    if(changed.checked){
+      // すべてがONなら他はOFF
+      categoryBoxes.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        if(cb.value !== '__all') cb.checked = false;
+      });
+    }
   } else {
-    workingSet = allQuestions.filter(q=>selectedCats.includes(q.category.trim()));
+    // 個別項目がONになったら「すべて」をOFFにする
+    if(changed.checked){
+      const allCb = categoryBoxes.querySelector('input[value="__all"]');
+      if(allCb) allCb.checked = false;
+    } else {
+      // もし全ての個別がOFFで「すべて」もOFFなら、自動で「すべて」をONにする（利便性）
+      const anyChecked = Array.from(categoryBoxes.querySelectorAll('input[type=checkbox]'))
+                        .some(cb => cb.value !== '__all' && cb.checked);
+      const allCb = categoryBoxes.querySelector('input[value="__all"]');
+      if(!anyChecked && allCb) allCb.checked = true;
+    }
+  }
+  updateNumBoxVisibility();
+}
+
+/* numBox 表示制御：'すべて' のみ選択されている時だけ表示 */
+function updateNumBoxVisibility(){
+  const checked = Array.from(categoryBoxes.querySelectorAll('input[type=checkbox]:checked')).map(cb=>cb.value);
+  const onlyAll = (checked.length === 1 && checked[0] === '__all');
+  if(onlyAll){
+    numBox.style.display = 'flex';
+    totalAvailableEl.textContent = allQuestions.length;
+    numInput.max = allQuestions.length;
+    if(Number(numInput.value) > allQuestions.length) numInput.value = allQuestions.length;
+  } else {
+    numBox.style.display = 'none';
+  }
+}
+
+/* Start 押下 */
+startBtn.addEventListener('click', ()=> {
+  if(!prepareWorkingSet()) return;
+  // reset state
+  currentIndex = 0;
+  userAnswers = [];
+  resultsEl.style.display = 'none';
+  summaryList.innerHTML = '';
+  quizArea.style.display = 'block';
+  showQuestion();
+});
+
+/* 選択されたカテゴリを配列で返す（__allが選択されている場合は ['__all']） */
+function getSelectedCategories(){
+  const checked = Array.from(categoryBoxes.querySelectorAll('input[type=checkbox]:checked')).map(cb=>cb.value.trim());
+  if(checked.length === 0) return ['__all'];
+  return checked;
+}
+
+/* 問題セット準備 */
+function prepareWorkingSet(){
+  const selected = getSelectedCategories();
+  // __all のみ選択されているか判定
+  const onlyAll = (selected.length === 1 && selected[0] === '__all');
+  if(onlyAll){
+    // 全問題から、numInputで指定された数だけ取得
+    let count = Number(numInput.value) || 0;
+    if(count < 1){ alert('問題数は1以上を指定してください'); return false; }
+    if(count > allQuestions.length) count = allQuestions.length;
+    // ランダムモードなら先にシャッフルしてからslice
+    let pool = allQuestions.slice();
+    if(orderSelect.value === 'random') shuffleArray(pool);
+    workingSet = pool.slice(0, count);
+  } else {
+    // 指定カテゴリに含まれる問題を集める
+    const targets = selected.map(s => s.trim());
+    workingSet = allQuestions.filter(q => targets.includes(q.category));
+    // order が random の場合は shuffle
+    if(orderSelect.value === 'random') shuffleArray(workingSet);
   }
 
-  if(workingSet.length===0){
+  if(workingSet.length === 0){
     alert('選択したカテゴリに問題がありません');
     return false;
   }
 
-  if(orderSelect.value==='random') shuffleArray(workingSet);
-  currentIndex=0; userAnswers=[];
+  // update UI progress count immediately
+  progressEl.textContent = `問題 1 / ${workingSet.length}`;
   return true;
 }
 
-
-function shuffleArray(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr;}
-
+/* 質問表示（自動0.5秒遷移） */
 function showQuestion(){
+  clearTimeout(autoAdvanceTimer);
   const q = workingSet[currentIndex];
   progressEl.textContent = `問題 ${currentIndex+1} / ${workingSet.length}`;
-  questionEl.textContent = q.text;
-  choicesEl.innerHTML='';
-
-  q.choices.forEach((ch,i)=>{
-    const btn = document.createElement('button');
-    btn.textContent = ch;
-    btn.onclick = ()=>{
-      if(userAnswers[currentIndex]!=null) return;
-      userAnswers[currentIndex]=i;
-      if(i===q.correctIndex) btn.classList.add('correct');
-      else btn.classList.add('wrong');
-
-      // 0.5秒後に次の問題へ
-      setTimeout(()=>{
-        currentIndex++;
-        if(currentIndex>=workingSet.length) showResult();
-        else showQuestion();
-      }, 500);
-    };
-    choicesEl.appendChild(btn);
+  qtext.textContent = q.text;
+  choicesDiv.innerHTML = '';
+  // create choices
+  q.choices.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'choice';
+    div.dataset.index = i;
+    div.innerHTML = `<div class="letter">${['A','B','C','D'][i]||i+1}</div><div>${escapeHtml(c||'')}</div>`;
+    div.addEventListener('click', ()=> onChoose(div, i));
+    choicesDiv.appendChild(div);
   });
 }
 
-
-function showResult(){
-  quizContainer.style.display='none';
-  resultContainer.style.display='block';
-  let correctCount=0;
-  allAnswersEl.innerHTML='';
-  workingSet.forEach((q,i)=>{
-    const li=document.createElement('li');
-    const ua=userAnswers[i];
-    const isCorrect=ua===q.correctIndex;
-    if(isCorrect) correctCount++;
-    li.innerHTML = `${q.text}<br>あなたの答え: ${ua!=null?q.choices[ua]:'未回答'} ｜ 正解: ${q.choices[q.correctIndex]} <span style="color:${isCorrect?'green':'red'}">${isCorrect?'正解':'不正解'}</span>`;
-    allAnswersEl.appendChild(li);
+/* 選択処理 */
+function onChoose(el, index){
+  const q = workingSet[currentIndex];
+  // already answered?
+  if(userAnswers[currentIndex] != null) return;
+  // mark disabled
+  Array.from(choicesDiv.children).forEach((ch, idx)=>{
+    ch.classList.add('disabled');
+    if(idx === q.correctIndex) ch.classList.add('correct');
+    if(idx === index && idx !== q.correctIndex) ch.classList.add('wrong');
   });
-  scoreEl.textContent = `正答数: ${correctCount} / ${workingSet.length}`;
+  userAnswers[currentIndex] = index;
+
+  // 自動遷移 0.5s
+  autoAdvanceTimer = setTimeout(()=>{
+    currentIndex++;
+    if(currentIndex >= workingSet.length){
+      showResults();
+    } else {
+      showQuestion();
+    }
+  }, 500);
 }
 
-startBtn.onclick=()=>{
-  if(!prepareWorkingSet()) return;
-  quizContainer.style.display='block';
-  resultContainer.style.display='none';
-  showQuestion();
-  nextBtn.style.display='none';
-};
+/* 結果表示 */
+function showResults(){
+  quizArea.style.display = 'none';
+  resultsEl.style.display = 'block';
+  const correctCount = userAnswers.filter((a, idx) => a === workingSet[idx].correctIndex).length;
+  scoreEl.textContent = correctCount;
+  scoreTotalEl.textContent = workingSet.length;
 
-nextBtn.onclick=()=>{
-  currentIndex++;
-  if(currentIndex>=workingSet.length) showResult();
-  else{ showQuestion(); nextBtn.style.display='none'; }
-};
+  // カテゴリ別集計（出題された問題の中での集計）
+const catMap = {}; // category -> { total, correct }
+workingSet.forEach((q, i) => {
+  const cat = q.category || '未分類';
+  if(!catMap[cat]) catMap[cat] = { total: 0, correct: 0 };
+  catMap[cat].total += 1;
+  if(userAnswers[i] === q.correctIndex) catMap[cat].correct += 1;
+});
+
+// カテゴリ別HTML生成
+let catHtml = '<div style="margin-top:12px;background:linear-gradient(90deg,rgba(0,168,255,0.06),rgba(0,119,214,0.03));padding:10px;border-radius:10px">';
+catHtml += '<div style="font-weight:700;margin-bottom:8px">カテゴリ別正答率</div>';
+catHtml += '<div style="display:flex;flex-direction:column;gap:8px">';
+Object.keys(catMap).forEach(cat => {
+  const t = catMap[cat].total;
+  const c = catMap[cat].correct;
+  const pct = t>0 ? Math.round((c / t) * 10000) / 100 : 0; // 小数点2桁
+  catHtml += `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">` +
+             `<div style="font-weight:600">${escapeHtml(cat)}</div>` +
+             `<div style="min-width:120px;text-align:right">${c} / ${t}（${pct}%）</div>` +
+             `</div>`;
+});
+catHtml += '</div></div>';
+
+  summaryList.innerHTML = '';
+  const catWrapper = document.createElement('div');
+  catWrapper.innerHTML = catHtml;
+  summaryList.appendChild(catWrapper);
+  workingSet.forEach((q, i) => {
+    const li = document.createElement('div');
+    li.className = 'summary-item';
+    const ua = userAnswers[i];
+    const ok = ua === q.correctIndex;
+    li.innerHTML = `<div style="font-weight:700">${escapeHtml(q.text)}</div>
+                    <div class="meta">カテゴリ: ${escapeHtml(q.category)}</div>
+                    <div style="margin-top:8px">あなた: <strong>${ua!=null? escapeHtml(q.choices[ua]) : '未回答'}</strong> ${ok? '<span style="color:var(--success);font-weight:700">（正解）</span>' : '<span style="color:var(--danger);font-weight:700">（不正解）</span>'}</div>
+                    <div class="meta" style="margin-top:6px">正答: <strong>${escapeHtml(q.choices[q.correctIndex])}</strong></div>`;
+    summaryList.appendChild(li);
+  });
+}
+
+/* ユーティリティ */
+function shuffleArray(a){
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+}
+function escapeHtml(str){ if(!str && str!==0) return ''; return String(str).replace(/[&<>\"]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;' }[s])); }
+function cryptoRandomId(){ return 'id_' + Math.random().toString(36).slice(2,9); }
+
+/* 入力制約の即時反映（numInputの最大値など）*/
+numInput.addEventListener('input', ()=>{
+  const max = allQuestions.length || 9999;
+  if(Number(numInput.value) > max) numInput.value = max;
+  if(Number(numInput.value) < 1) numInput.value = 0;
+});
 </script>
-
 </body>
 </html>
